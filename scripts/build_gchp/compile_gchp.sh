@@ -29,5 +29,5 @@ printf "$HOME/ExtData \n 2 \n 1 \n $TOP_DIR \n gchp_standard \n n" | ./createRun
 
 # compile source code
 cd $TOP_DIR/gchp_standard
-ln -sf ~/gchp.env gchp.env
+ln -sf $TOP_DIR/gchp.env ./gchp.env
 make build_all
