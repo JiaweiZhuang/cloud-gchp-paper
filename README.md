@@ -9,6 +9,7 @@ The operational support for serious research use is planned after version 13.0.0
 
 # Table of Contents
   * [Related repositories](#related-repositories)
+  * [Reproduce scalability plots](#reproduce-scalability-plots)
   * [Launch HPC cluster on AWS](#launch-hpc-cluster-on-aws)
   * [Run pre-compiled model](#run-pre-compiled-model)
   * [Build model on AWS from scratch](#build-model-on-aws-from-scratch)
@@ -26,6 +27,10 @@ This repo only contains GCHP-specific code and instructions. Other generic MPI b
 GCHP model source code:
 - Before version 12.x (used for this paper): https://github.com/geoschem/gchp
 - After version 13.0.0: https://github.com/geoschem/gchp_ctm
+
+## Reproduce scalability plots
+
+See notebooks and log files. No need to rerun the model or set up any cluster.
 
 ## Launch HPC cluster on AWS
 
@@ -59,7 +64,20 @@ Other parameters like key names, VPC and subnet IDs are user-specific. `spot` pr
 
 ### Pull input data
 
+Configure AWSCLI permission with `aws configure` (ref [AWS official tutorial](https://aws.amazon.com/getting-started/tutorials/backup-to-s3-cli/)), and make sure that `aws s3 ls --request-payer=requester s3://gcgrid/` runs successfully.
+
+    mkdir -p /shared/ExtData/  # put data in the large shared volume
+    ln -s /shared/ExtData/ $HOME/ExtData  # to match run directory link
+
+    cd $HOME
+    git clone https://github.com/JiaweiZhuang/cloud-gchp-paper.git
+    cd cloud-gchp-paper/scripts/download_data/
+    ./all_input_GCHP.sh /shared/ExtData/
+
+By default, the model reads 4x5 metfields to save space and time. For a scientifically solid simulation, should pull the native resolution metfields via [scripts/download_data/metfields_native.sh](./scripts/download_data/metfields_native.sh) and set [scripts/configure_rundir/set_0.25met.sh](./scripts/configure_rundir/set_0.25met.sh). That will slow down I/O by 3x.
+
 ### Verify simulation results
+
 
 ## Build model on AWS from scratch
 
@@ -206,11 +224,67 @@ Then, run the model build script:
     cd cloud-gchp-paper/scripts/build_gchp/
     ./compile_gchp.sh
 
+The build process takes ~30 minutes. Should see a success message `GCHP executable exists!` at the end.
+
 ### Pull input data
 
 Exactly the same as in "Run pre-compiled model" section.
 
 ### Tweak run-time configurations
+
+First apply necessary tweakings:
+
+    cd cloud-gchp-paper/scripts/configure_rundir/
+    ./setup_benchmark.sh
+    ./set_4x5.met.sh
+
+In `runConfig.sh`, set:
+
+```bash
+# 7-day simulation
+Start_Time="20160701 000000"
+End_Time="20160708 000000"
+Duration="00000007 000000"
+
+# write one output per day
+common_freq="240000"
+common_dur="240000"
+common_mode="'instantaneous'"
+```
+
+Recommend first testing C24 resolution on a single node, as in the default setting:
+
+```
+CS_RES=24
+
+NUM_NODES=1
+NUM_CORES_PER_NODE=6
+NY=6
+NX=1
+```
+
+[`scripts/run_gchp_slurm/run_gchp_1node.sbatch`](scripts/run_gchp_slurm/run_gchp_1node.sbatch) to the run directory, and `sbatch run_gchp_1node.sbatch` to submit the job.
+
+Then, run C180 resolution on multiple nodes:
+
+```
+CS_RES=180
+
+NUM_NODES=8
+NUM_CORES_PER_NODE=36
+NY=48
+NX=6
+```
+
+This setting is exactly the same as in "Run pre-compiled model" section. Use [`scripts/run_gchp_slurm/run_gchp.sbatch`](scripts/run_gchp_slurm/run_gchp.sbatch).
+
+Domain decomposition for different core numbers:
+
+(nodes, cores) : (NX, NY)
+- (4, 144) : (24, 6)
+- (8, 288) : (48, 6)
+- (16, 576) : (72, 8)
+- (32, 1152) : (96, 12)
 
 ### Archive run directory for future use
 
