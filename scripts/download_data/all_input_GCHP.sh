@@ -11,7 +11,7 @@ else
 fi
 
 ./CHEM_INPUTS.sh $DATA_ROOT
-./HEMCO.sh $DATA_ROOT
+./HEMCO_small.sh $DATA_ROOT
 ./fix_GMI.sh $DATA_ROOT
 ./fix_dust.sh $DATA_ROOT
 ./GCHP-restart.sh $DATA_ROOT
