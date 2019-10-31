@@ -13,5 +13,6 @@ fi
 ./CHEM_INPUTS.sh $DATA_ROOT
 ./HEMCO.sh $DATA_ROOT
 ./fix_GMI.sh $DATA_ROOT
+./fix_dust.sh $DATA_ROOT
 ./GCHP-restart.sh $DATA_ROOT
 ./metfields_4x5.sh $DATA_ROOT
