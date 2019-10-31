@@ -1,5 +1,4 @@
 #!/bin/bash
-# From https://github.com/geoschem/geos-chem-cloud/issues/25#issuecomment-548188720
 
 if [ "$1" ]; then
   DATA_ROOT=$1
@@ -8,6 +7,10 @@ else
   exit 1
 fi
 
+# To fix https://github.com/geoschem/gchp/issues/52#issuecomment-548584107
+aws s3 cp --request-payer=requester --recursive s3://gcgrid/HEMCO/PARANOX $DATA_ROOT/HEMCO/PARANOX
+
+# Rest of files are generated from https://github.com/geoschem/geos-chem-cloud/issues/25#issuecomment-548188720
 aws s3 cp --request-payer=requester --recursive s3://gcgrid/HEMCO/ACET/v2014-07 $DATA_ROOT/HEMCO/ACET/v2014-07
 aws s3 cp --request-payer=requester --recursive s3://gcgrid/HEMCO/AEIC/v2015-01 $DATA_ROOT/HEMCO/AEIC/v2015-01
 aws s3 cp --request-payer=requester --recursive s3://gcgrid/HEMCO/ALD2/v2017-03 $DATA_ROOT/HEMCO/ALD2/v2017-03
