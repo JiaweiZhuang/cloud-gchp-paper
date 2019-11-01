@@ -34,11 +34,13 @@ See notebooks and log files. No need to rerun the model or set up any cluster.
 
 ## Launch HPC cluster on AWS
 
-Follow my [cloud HPC guide](https://jiaweizhuang.github.io/blog/aws-hpc-guide/) to get familiar with [AWS ParallelCluster](https://github.com/aws/aws-parallelcluster). Current benchmark uses this specific version with [EFA enabled](https://aws.amazon.com/hpc/efa/):
+Follow my [cloud HPC guide](https://jiaweizhuang.github.io/blog/aws-hpc-guide/) to get familiar with [AWS ParallelCluster](https://github.com/aws/aws-parallelcluster), especially on how to manage auto-scaling groups.
+
+Current benchmark uses this specific version with [EFA enabled](https://aws.amazon.com/hpc/efa/):
 
     pip install --upgrade aws-parallelcluster==2.4.1
 
-Important parameters in `~/.parallelcluster/config` are:
+Recommended parameters in `~/.parallelcluster/config` are:
 
     enable_efa = compute
     cluster_type = spot
@@ -48,6 +50,9 @@ Important parameters in `~/.parallelcluster/config` are:
     base_os = centos7
     master_instance_type = c5n.large
     compute_instance_type = c5n.18xlarge
+    initial_queue_size = 1
+    max_queue_size = 8
+    maintain_initial_size = false
     master_root_volume_size = 80
     ebs_settings = shared
 
@@ -56,25 +61,74 @@ Important parameters in `~/.parallelcluster/config` are:
     volume_type = st1
     volume_size = 500
 
-Other parameters like key names, VPC and subnet IDs are user-specific. `spot` pricing is highly recommended, as the cost of large-scale HPC jobs can add up quickly.
+Other parameters like key names, VPC and subnet IDs are user-specific. `spot` pricing is highly recommended, as the cost of large-scale HPC jobs can add up quickly. `max_queue_size` can be increased later by directly editing auto-scaling groups, if more nodes are needed.
 
 ## Run pre-compiled model
 
 ### Pull run directory with compiled executable
 
-### Pull input data
+Need both libraries and pre-configured run directory:
+
+```bash
+cd $HOME
+aws s3 cp s3://cloud-gchp-paper/spack-gchp-env.tar.gz ./
+tar zxvf spack-gchp-env.tar.gz  # gives spack/ directory
+
+aws s3 cp s3://cloud-gchp-paper/gchp_12.3.2_precompiled.tar.gz ./
+tar zxvf gchp_12.3.2_precompiled.tar.gz  # gives gchp_12.3.2/ directory
+```
+
+### Prepare data directory
 
 Configure AWSCLI permission with `aws configure` (ref [AWS official tutorial](https://aws.amazon.com/getting-started/tutorials/backup-to-s3-cli/)), and make sure that `aws s3 ls --request-payer=requester s3://gcgrid/` runs successfully.
 
-    mkdir -p /shared/ExtData/  # put data in the large shared volume
-    ln -s /shared/ExtData/ $HOME/ExtData  # to match run directory link
+```bash
+mkdir -p /shared/ExtData/  # put data in the large shared volume
+ln -s /shared/ExtData/ $HOME/ExtData  # to match run directory link
 
-    cd $HOME
-    git clone https://github.com/JiaweiZhuang/cloud-gchp-paper.git
-    cd cloud-gchp-paper/scripts/download_data/
-    ./all_input_GCHP.sh /shared/ExtData/
+cd $HOME
+git clone https://github.com/JiaweiZhuang/cloud-gchp-paper.git
+cd cloud-gchp-paper/scripts/download_data/
+./all_input_GCHP.sh /shared/ExtData/
+```
 
 By default, the model reads 4x5 metfields to save space and time. For a scientifically solid simulation, should pull the native resolution metfields via [scripts/download_data/metfields_native.sh](./scripts/download_data/metfields_native.sh) and set [scripts/configure_rundir/set_0.25met.sh](./scripts/configure_rundir/set_0.25met.sh). That will slow down I/O by 3x.
+
+Also make a directory to hold output data:
+
+    mkdir /shared/OutputDir
+
+### Submit simulation jobs
+
+With libraries, run directory, and input data available, the model is ready to run.
+
+    cd $HOME/gchp_12.3.2/gchp_standard
+    sbatch run_gchp_1node.sbatch
+
+This will run a C24 resolution simulation on 1 node, as a sanity check.
+
+Then, increase the resolution to C180 and run on 8 nodes, by editing and then running `runConfig.sh`:
+
+```
+CS_RES=180
+
+NUM_NODES=8
+NUM_CORES_PER_NODE=36
+NY=48
+NX=6
+```
+
+Submit job:
+
+    sbatch run_gchp.sbatch
+
+For other node/core counts, use the domain decomposition below for the `NX`, `NY` parameters in `runConfig.sh`:
+
+(nodes, cores) : (NX, NY)
+- (4, 144) : (24, 6)
+- (8, 288) : (48, 6)
+- (16, 576) : (72, 8)
+- (32, 1152) : (96, 12)
 
 ### Verify simulation results
 
@@ -265,26 +319,13 @@ NX=1
 
 [`scripts/run_gchp_slurm/run_gchp_1node.sbatch`](scripts/run_gchp_slurm/run_gchp_1node.sbatch) to the run directory, and `sbatch run_gchp_1node.sbatch` to submit the job.
 
-Then, run C180 resolution on multiple nodes:
+Then, try C180 resolution on multiple nodes, as in "Run pre-compiled model" section. Use [`scripts/run_gchp_slurm/run_gchp.sbatch`](scripts/run_gchp_slurm/run_gchp.sbatch).
 
-```
-CS_RES=180
+To write a lot of output data, should mount output directory to shared volume:
 
-NUM_NODES=8
-NUM_CORES_PER_NODE=36
-NY=48
-NX=6
-```
-
-This setting is exactly the same as in "Run pre-compiled model" section. Use [`scripts/run_gchp_slurm/run_gchp.sbatch`](scripts/run_gchp_slurm/run_gchp.sbatch).
-
-Domain decomposition for different core numbers:
-
-(nodes, cores) : (NX, NY)
-- (4, 144) : (24, 6)
-- (8, 288) : (48, 6)
-- (16, 576) : (72, 8)
-- (32, 1152) : (96, 12)
+    rm -rf OutputDir
+    mkdir /shared/OutputDir
+    ln -s /shared/OutputDir OutputDir
 
 ### Archive run directory for future use
 
