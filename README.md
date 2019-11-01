@@ -122,7 +122,7 @@ Submit job:
 
     sbatch run_gchp.sbatch
 
-For other node/core counts, use the domain decomposition below for the `NX`, `NY` parameters in `runConfig.sh`:
+For other node/core counts, use the `NX`, `NY` parameters below in `runConfig.sh` for proper domain decomposition:
 
 (nodes, cores) : (NX, NY)
 - (4, 144) : (24, 6)
