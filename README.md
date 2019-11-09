@@ -30,7 +30,7 @@ GCHP model source code:
 
 ## Reproduce scalability plots
 
-See notebooks and log files. No need to rerun the model or set up any cluster.
+See [notebooks](./notebooks) and [log files](https://github.com/JiaweiZhuang/cloud-gchp-paper/issues/1). No need to rerun the model or set up any cluster.
 
 ## Launch HPC cluster on AWS
 
