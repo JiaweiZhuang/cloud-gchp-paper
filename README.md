@@ -25,7 +25,8 @@ This repo only contains GCHP-specific code and instructions. Other generic MPI b
 - https://github.com/JiaweiZhuang/ipm_util
 
 GCHP model source code:
-- Before version 12.x (used for this paper): https://github.com/geoschem/gchp
+- Personal fork for this work: https://github.com/JiaweiZhuang/gchp/tree/12.3.2-intelmpi-cloud-gchp-paper
+- Official repo before version 12.x: https://github.com/geoschem/gchp
 - After version 13.0.0: https://github.com/geoschem/gchp_ctm
 
 ## Reproduce scalability plots
