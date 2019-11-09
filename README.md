@@ -370,3 +370,5 @@ To turn off IPM profiling, just set:
 Analyze IPM results by https://github.com/JiaweiZhuang/ipm_util
 
 ## Build model on NASA Pleiades
+
+See [scripts/pleiades](./scripts/pleiades) for necessary files. The compile steps, run-time configuration, and input data preparation are exactly the same as on AWS.
