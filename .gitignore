@@ -4,4 +4,6 @@
 __pycache__
 
 *.log
+*.xml
 *.tar.gz
+*.png
