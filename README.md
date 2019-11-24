@@ -330,6 +330,10 @@ To write a lot of output data, should mount output directory to shared volume:
 
 ### Archive run directory for future use
 
+    cd $HOME
+    tar zcvf gchp_12.3.2.tar.gz gchp_12.3.2
+    aws s3 cp gchp_12.3.2.tar.gz s3://[your-bucket-name]/
+
 ## MPI Profiling with IPM
 
 Build IPM with Intel compiler and Intel MPI:
