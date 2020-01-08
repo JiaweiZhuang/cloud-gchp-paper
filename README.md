@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/218320547.svg)](https://zenodo.org/badge/latestdoi/218320547)
+
 # Code to reproduce GCHP-on-cloud paper
 
 Please open an issue on [issue tracker](https://github.com/JiaweiZhuang/cloud-gchp-paper/issues) if you encounter problems in any steps.
