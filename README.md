@@ -197,55 +197,55 @@ icc --version  # will fail if license is not available
 
 1. Configure Intel-MPI
 
-AWS ParallelCluster comes with an Intel MPI installation, which can be found by `module show intelmpi` and `module load intelmpi`.
+   AWS ParallelCluster comes with an Intel MPI installation, which can be found by `module show intelmpi` and `module load intelmpi`.
 
-Switching between internal compilers is done by setting [Compilation Environment Variables](https://software.intel.com/en-us/mpi-developer-reference-windows-compilation-environment-variables). To wrap Intel compilers instead of GNU compilers:
+   Switching between internal compilers is done by setting [Compilation Environment Variables](https://software.intel.com/en-us/mpi-developer-reference-windows-compilation-environment-variables). To wrap Intel compilers instead of GNU compilers:
 
-```bash
-export I_MPI_CC=icc
-export I_MPI_CXX=icpc
-export I_MPI_FC=ifort
-export I_MPI_F77=ifort
-export I_MPI_F90=ifort
-```
+	```bash
+	export I_MPI_CC=icc
+	export I_MPI_CXX=icpc
+	export I_MPI_FC=ifort
+	export I_MPI_F77=ifort
+	export I_MPI_F90=ifort
+	```
 
-Verify that `mpicc` actually wraps `icc`:
-
-    module load intelmpi
-    mpicc --version  # should be icc instead of gcc
-
+	Verify that `mpicc` actually wraps `icc`:
+	```
+	module load intelmpi
+	mpicc --version  # should be icc instead of gcc
+	```
 2. Install NetCDF with Intel compiler. Built it without MPI dependency as GCHP does not need MPI-enabled NetCDF.
-
-    spack -v install netcdf-fortran %intel ^netcdf~mpi ^hdf5~mpi+fortran+hl
-
+   ```
+   spack -v install netcdf-fortran %intel ^netcdf~mpi ^hdf5~mpi+fortran+hl
+   ```
 3. (optional) Here we only use IntelMPI to compile model code, not to further compile other libraries like NetCDF. If you want to further use IntelMPI to compile libraries within Spack, should add the pre-installed IntelMPI as [External Packages](https://spack.readthedocs.io/en/latest/build_settings.html#external-packages) to Spack by editing `~/.spack/packages.yaml`:
 
-```
-packages:
-  intel-mpi:
-    paths:
-      intel-mpi@2019.4.243: /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/
-    buildable: False
-```
+   ```
+   packages:
+     intel-mpi:
+       paths:
+         intel-mpi@2019.4.243: /opt/intel/compilers_and_libraries_2019.4.243/linux/mpi/intel64/
+       buildable: False
+   ```
 
-Note that unlike other open-source MPI libraries that need to be rebuilt with every compiler, a single installation of Intel-MPI works with multiple compilers. No need to specify the compiler dependency like `intel-mpi%intel` in the above Spack config file.
+	Note that unlike other open-source MPI libraries that need to be rebuilt with every compiler, a single installation of Intel-MPI works with multiple compilers. No need to specify the compiler dependency like `intel-mpi%intel` in the above Spack config file.
 
 4. (Optional) Can also build OpenMPI as an alternative MPI implementation, although Intel-MPI is recommended for getting the best performance on AWS.
 
-Add the following section to `~/.spack/packages.yaml`:
+	Add the following section to `~/.spack/packages.yaml`:
 
-```
-packages:
-  slurm:
-    paths:
-      slurm@18.08.6: /opt/slurm/
-    buildable: False
-```
+	```
+	packages:
+	  slurm:
+		paths:
+		  slurm@18.08.6: /opt/slurm/
+		buildable: False
+	```
 
-Then install by:
-
-    spack -v install openmpi+pmi schedulers=slurm %intel
-
+	Then install by:
+	```
+	spack -v install openmpi+pmi schedulers=slurm %intel
+	```
 ### Archive Spack directory for future use
 
     spack clean --all
