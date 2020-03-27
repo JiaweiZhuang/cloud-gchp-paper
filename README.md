@@ -66,6 +66,8 @@ Recommended parameters in `~/.parallelcluster/config` are:
 
 Other parameters like key names, VPC and subnet IDs are user-specific. `spot` pricing is highly recommended, as the cost of large-scale HPC jobs can add up quickly. `max_queue_size` can be increased later by directly editing auto-scaling groups, if more nodes are needed.
 
+Note: The `c5n.18xlarge` instance type has 72vcpus, while for new AWS accounts, the default maximum is only 32vcpu. If your cluster fails to create, this could be the problem -- it can't create the initial compute instance.  To check, login to the AWS console, go to EC2, then to autoscaling groups.  Select the autoscaling group for the cluster and then click on activity status. If you see *failed*, click *failed* and you get an explanation for the failure along with a link to a form to increase the vcpu limit on your account.  This can take a few days to be approved.  While you are waiting, you can use a `c5n.4xlarge` for your `compute_instance_type`, which has 16vcpus. 
+
 ## Run pre-compiled model
 
 ### Pull run directory with compiled executable
